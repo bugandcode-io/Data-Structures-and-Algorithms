@@ -6,7 +6,7 @@ This project is a visual and mathematical exploration of the Tower of Hanoi algo
 
 ![Tower of Hanoi Logic Breakdown](images/hanoi.png)
 
-## 🚀 [View the Live Interactive Demo](https://bugandcode-io/Data-Structures-and-Algorithms/tower_of_hanoi.html)
+## 🚀 [View the Live Interactive Demo](https://bugandcode-io.github.io/Data-Structures-and-Algorithms/tower_of_hanoi.html)
 
 ---
 
