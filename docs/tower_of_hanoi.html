@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tower of Hanoi (Demo)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#0f1730;
+      --text:#f2f4f8;
+      --muted:#a7b0c0;
+      --accent:#00b0ff;
+      --border:rgba(255,255,255,.12);
+      --shadow: 0 16px 50px rgba(0,0,0,.45);
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 700px at 15% 10%, rgba(0,176,255,.18), transparent 55%),
+                  radial-gradient(900px 600px at 85% 25%, rgba(0,255,170,.10), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      justify-content:center;
+      padding:28px 16px;
+    }
+    .wrap{
+      width:min(980px, 100%);
+      display:grid;
+      gap:16px;
+    }
+    header{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:16px;
+    }
+    h1{
+      margin:0;
+      font-size: clamp(22px, 2.8vw, 32px);
+      letter-spacing: .2px;
+    }
+    .sub{
+      margin:6px 0 0 0;
+      color:var(--muted);
+      font-size:14px;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      padding:14px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .left, .right{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    label{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      color:var(--muted);
+      font-size:14px;
+      user-select:none;
+    }
+    input[type="range"]{width:160px}
+    .pill{
+      padding:6px 10px;
+      border:1px solid var(--border);
+      border-radius: 999px;
+      color:var(--muted);
+      font-size:12px;
+      background: rgba(0,0,0,.18);
+    }
+    button{
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.25);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      transition: transform .04s ease, background .15s ease, border-color .15s ease;
+      font-weight:600;
+      letter-spacing:.2px;
+    }
+    button:hover{background: rgba(0,0,0,.35); border-color: rgba(0,176,255,.45)}
+    button:active{transform: translateY(1px)}
+    button.primary{
+      background: rgba(0,176,255,.20);
+      border-color: rgba(0,176,255,.55);
+    }
+    button:disabled{
+      opacity:.5;
+      cursor:not-allowed;
+    }
+
+    /* Stage */
+    .stage{
+      padding:18px 18px 22px;
+    }
+    .pegs{
+      height:360px;
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:16px;
+      align-items:end;
+    }
+    .peg{
+      position:relative;
+      height:100%;
+      border-radius: 18px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.18);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-end;
+      padding:16px 12px 14px;
+    }
+    .peg::before{
+      content:"";
+      position:absolute;
+      left:50%;
+      bottom:52px;
+      transform:translateX(-50%);
+      width:12px;
+      height: 68%;
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(255,255,255,.25), rgba(255,255,255,.08));
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.10);
+    }
+    .peg::after{
+      content:"";
+      position:absolute;
+      left:10px;
+      right:10px;
+      bottom:18px;
+      height:16px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.06));
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.10);
+    }
+    .peg-title{
+      position:absolute;
+      top:10px;
+      left:12px;
+      font-weight:800;
+      color: rgba(242,244,248,.9);
+      font-size:13px;
+      letter-spacing:.8px;
+    }
+
+    .stack{
+      position:relative;
+      display:flex;
+      flex-direction:column-reverse; /* bottom disk first visually */
+      gap:7px;
+      padding-bottom:40px;
+      align-items:center;
+      z-index:2;
+    }
+
+    .disk{
+      height:22px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.16);
+      background: linear-gradient(180deg, rgba(0,176,255,.55), rgba(0,176,255,.20));
+      box-shadow: 0 10px 24px rgba(0,0,0,.35);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:12px;
+      font-weight:800;
+      color: rgba(10,16,32,.92);
+      user-select:none;
+    }
+
+    .status{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      padding:12px 14px 16px;
+      border-top:1px solid var(--border);
+      color:var(--muted);
+      font-size:13px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    code{
+      color: rgba(242,244,248,.92);
+      background: rgba(0,0,0,.25);
+      border:1px solid var(--border);
+      padding:6px 10px;
+      border-radius: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:12px;
+      max-width:100%;
+      display:inline-block;
+      overflow:auto;
+      white-space:nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Tower of Hanoi — Visual Demo</h1>
+        <p class="sub">Solve automatically or step through moves. Perfect for an on-screen example.</p>
+      </div>
+      <div class="pill" id="minMovesPill">Min moves: —</div>
+    </header>
+
+    <div class="card">
+      <div class="controls">
+        <div class="left">
+          <label>
+            Disks:
+            <input id="diskRange" type="range" min="1" max="8" value="3" />
+            <span class="pill" id="diskCount">3</span>
+          </label>
+          <button id="resetBtn">Reset</button>
+        </div>
+
+        <div class="right">
+          <button id="stepBtn">Step</button>
+          <button class="primary" id="solveBtn">Solve</button>
+          <button id="pauseBtn" disabled>Pause</button>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="pegs">
+          <div class="peg">
+            <div class="peg-title">A</div>
+            <div class="stack" id="pegA"></div>
+          </div>
+          <div class="peg">
+            <div class="peg-title">B</div>
+            <div class="stack" id="pegB"></div>
+          </div>
+          <div class="peg">
+            <div class="peg-title">C</div>
+            <div class="stack" id="pegC"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="status">
+        <div>Move: <span class="pill" id="moveIndex">0</span> / <span class="pill" id="moveTotal">0</span></div>
+        <div>Last move: <code id="lastMove">—</code></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ======= Hanoi logic (generates move list) =======
+    function generateMoves(n, source = "A", helper = "B", target = "C", out = []) {
+      if (n <= 0) return out;
+      if (n === 1) {
+        out.push([source, target]);
+        return out;
+      }
+      generateMoves(n - 1, source, target, helper, out);
+      out.push([source, target]);
+      generateMoves(n - 1, helper, source, target, out);
+      return out;
+    }
+
+    // ======= State =======
+    const pegEls = {
+      A: document.getElementById("pegA"),
+      B: document.getElementById("pegB"),
+      C: document.getElementById("pegC"),
+    };
+
+    const diskRange = document.getElementById("diskRange");
+    const diskCountEl = document.getElementById("diskCount");
+    const minMovesPill = document.getElementById("minMovesPill");
+
+    const resetBtn = document.getElementById("resetBtn");
+    const stepBtn = document.getElementById("stepBtn");
+    const solveBtn = document.getElementById("solveBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+
+    const moveIndexEl = document.getElementById("moveIndex");
+    const moveTotalEl = document.getElementById("moveTotal");
+    const lastMoveEl = document.getElementById("lastMove");
+
+    let n = Number(diskRange.value);
+    let moves = [];
+    let moveIndex = 0;
+    let stacks = { A: [], B: [], C: [] };
+    let timer = null;
+    const STEP_MS = 450;
+
+    function minMoves(n) {
+      return (2 ** n) - 1;
+    }
+
+    function diskWidth(n, diskNumber) {
+      // diskNumber: 1 is smallest, n is largest
+      const min = 56;
+      const max = 220;
+      const t = (diskNumber - 1) / Math.max(1, (n - 1));
+      return Math.round(min + (max - min) * t);
+    }
+
+    function diskColor(diskNumber, n) {
+      // Slight variation via HSL for visual separation without external libs
+      const hue = 200 + Math.round((diskNumber - 1) * (120 / Math.max(1, n - 1)));
+      return `linear-gradient(180deg, hsla(${hue}, 90%, 60%, .75), hsla(${hue}, 90%, 55%, .22))`;
+    }
+
+    function render() {
+      // Clear pegs
+      for (const k of ["A", "B", "C"]) pegEls[k].innerHTML = "";
+
+      // Render each peg's stack bottom-up (we use column-reverse, so normal order is fine)
+      for (const peg of ["A","B","C"]) {
+        const arr = stacks[peg];
+        for (const diskNumber of arr) {
+          const d = document.createElement("div");
+          d.className = "disk";
+          d.style.width = diskWidth(n, diskNumber) + "px";
+          d.style.background = diskColor(diskNumber, n);
+          d.textContent = diskNumber;
+          pegEls[peg].appendChild(d);
+        }
+      }
+
+      moveIndexEl.textContent = String(moveIndex);
+      moveTotalEl.textContent = String(moves.length);
+      minMovesPill.textContent = `Min moves: ${minMoves(n)}`;
+    }
+
+    function resetAll() {
+      stopAuto();
+      n = Number(diskRange.value);
+      diskCountEl.textContent = String(n);
+
+      // Disks are numbers: 1 smallest ... n largest
+      stacks = { A: [], B: [], C: [] };
+      for (let d = n; d >= 1; d--) stacks.A.push(d);
+
+      moves = generateMoves(n);
+      moveIndex = 0;
+      lastMoveEl.textContent = "—";
+      render();
+      setButtons();
+    }
+
+    function setButtons() {
+      const done = moveIndex >= moves.length;
+      stepBtn.disabled = done || !!timer;
+      solveBtn.disabled = done || !!timer;
+      pauseBtn.disabled = !timer;
+      resetBtn.disabled = false;
+      diskRange.disabled = !!timer;
+    }
+
+    function isLegalMove(from, to) {
+      const fromStack = stacks[from];
+      const toStack = stacks[to];
+      if (fromStack.length === 0) return false;
+      const disk = fromStack[fromStack.length - 1];
+      const topTo = toStack[toStack.length - 1];
+      return topTo === undefined || disk < topTo;
+    }
+
+    function doMove(from, to) {
+      if (!isLegalMove(from, to)) {
+        throw new Error(`Illegal move attempted: ${from} -> ${to}`);
+      }
+      const disk = stacks[from].pop();
+      stacks[to].push(disk);
+      lastMoveEl.textContent = `Move disk ${disk}: ${from} -> ${to}`;
+      moveIndex++;
+      render();
+      setButtons();
+    }
+
+    function stepOnce() {
+      if (moveIndex >= moves.length) return;
+      const [from, to] = moves[moveIndex];
+      doMove(from, to);
+    }
+
+    function startAuto() {
+      if (timer || moveIndex >= moves.length) return;
+      timer = setInterval(() => {
+        if (moveIndex >= moves.length) {
+          stopAuto();
+          return;
+        }
+        stepOnce();
+      }, STEP_MS);
+      setButtons();
+    }
+
+    function stopAuto() {
+      if (timer) clearInterval(timer);
+      timer = null;
+      setButtons();
+    }
+
+    // ======= Events =======
+    diskRange.addEventListener("input", () => {
+      diskCountEl.textContent = diskRange.value;
+      minMovesPill.textContent = `Min moves: ${(2 ** Number(diskRange.value)) - 1}`;
+    });
+
+    diskRange.addEventListener("change", resetAll);
+
+    resetBtn.addEventListener("click", resetAll);
+    stepBtn.addEventListener("click", stepOnce);
+    solveBtn.addEventListener("click", startAuto);
+    pauseBtn.addEventListener("click", stopAuto);
+
+    // Init
+    resetAll();
+  </script>
+</body>
+</html>
